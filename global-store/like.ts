@@ -8,8 +8,8 @@ interface LikeItem {
 }
 
 interface LikeStoreState {
-  list: { product: LikeItem[]; shop: LikeItem[]; master: LikeItem[] };
-  likeOrDislike: (type: LikeTypes, productId: number, sent?: boolean) => void;
+  list: { property: LikeItem[]; shop: LikeItem[]; master: LikeItem[] };
+  likeOrDislike: (type: LikeTypes, id: number, sent?: boolean) => void;
   markEveryItemToSent: (type: LikeTypes) => void;
   clear: (type: LikeTypes) => void;
   setMany: (type: LikeTypes, list: LikeItem[]) => void;
@@ -18,7 +18,7 @@ interface LikeStoreState {
 const useLikeStore = create<LikeStoreState>()(
   persist(
     (set) => ({
-      list: { product: [], master: [], shop: [] },
+      list: { property: [], master: [], shop: [] },
       likeOrDislike: (type, itemId, sent = false) =>
         set((oldState) => ({
           list: {

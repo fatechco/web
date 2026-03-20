@@ -1,6 +1,8 @@
+import "bootstrap/dist/css/bootstrap.min.css";
 import "swiper/css";
 import "remixicon/fonts/remixicon.css";
-import "./globals.css";
+//import "./globals.css";
+import "@/public/scss/main.scss";
 import { Inter } from "next/font/google";
 import { Metadata } from "next";
 import { parseSettings } from "@/utils/parse-settings";

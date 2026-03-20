@@ -181,7 +181,7 @@ export interface TransactionCreateBody {
   };
 }
 
-export type LikeTypes = "product" | "shop" | "master";
+export type LikeTypes = "property" | "shop" | "master";
 
 export interface LikeOptions {
   type: LikeTypes;

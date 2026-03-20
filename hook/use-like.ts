@@ -4,7 +4,7 @@ import useLikeStore from "@/global-store/like";
 import { InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LikeOptions, LikeTypes, Paginate } from "@/types/global";
 import { likeService } from "@/services/like";
-import { Product } from "@/types/product";
+import { Product, Property } from "@/types/product";
 import useUserStore from "@/global-store/user";
 import { useCallback } from "react";
 import useAddressStore from "@/global-store/address";
@@ -13,8 +13,8 @@ const getQueryType = (type: LikeTypes) => {
   switch (type) {
     case "shop":
       return "likedShops";
-    case "product":
-      return "likedProducts";
+    case "property":
+      return "likedProperties";
     case "master":
       return "likedMasters";
     default:
@@ -23,7 +23,7 @@ const getQueryType = (type: LikeTypes) => {
 };
 
 export const useLike = (type: LikeTypes, itemId?: number) => {
-  const queryClint = useQueryClient();
+  const queryClient = useQueryClient();
   const user = useUserStore((state) => state.user);
   const { list, likeOrDislike } = useLikeStore();
   const isLiked = list[type]?.some((item) => item.itemId === itemId);
@@ -41,15 +41,15 @@ export const useLike = (type: LikeTypes, itemId?: number) => {
   const { mutate: disLikeRequest } = useMutation({
     mutationFn: (body: LikeOptions) => likeService.dislike(body),
     onMutate: async (body) => {
-      await queryClint.cancelQueries([getQueryType(type)], { exact: false });
-      const prevLikeList = queryClint.getQueryData<InfiniteData<Paginate<Product>>>(
+      await queryClient.cancelQueries([getQueryType(type)], { exact: false });
+      const prevLikeList = queryClient.getQueryData<InfiniteData<Paginate<Property>>>(
         [getQueryType(type)],
         {
           exact: false,
         }
       );
       console.log("prevLikeList => ", prevLikeList);
-      queryClint.setQueriesData<InfiniteData<Paginate<Product>> | undefined>(
+      queryClient.setQueriesData<InfiniteData<Paginate<Property>> | undefined>(
         { queryKey: [getQueryType(type)], exact: false },
         (old) => {
           console.log("old", old);
@@ -67,11 +67,11 @@ export const useLike = (type: LikeTypes, itemId?: number) => {
       return { prevLikeList };
     },
     onError: (error, variables, context) => {
-      queryClint.setQueryData([type], context?.prevLikeList);
+      queryClient.setQueryData([type], context?.prevLikeList);
     },
     onSettled: () => {
       const customType = getQueryType(type);
-      queryClint.invalidateQueries({ queryKey: [customType], exact: false });
+      queryClient.invalidateQueries({ queryKey: [customType], exact: false });
     },
   });
 

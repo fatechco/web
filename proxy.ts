@@ -26,7 +26,7 @@ export const proxy = async (request: NextRequest) => {
 
   if (
     !(await cookies()).has("token") &&
-    (pathname.includes("/profile") || pathname.includes("/orders"))
+    (pathname.includes("/profile") || pathname.includes("/dashboard"))
   ) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";

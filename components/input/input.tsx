@@ -5,7 +5,6 @@
 import clsx from "clsx";
 import React, { forwardRef, InputHTMLAttributes, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { IconButton } from "../icon-button";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   fullWidth?: boolean;
@@ -43,81 +42,88 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = useId();
 
     const handleChangeType = () => {
-      if (inputType === "password") {
-        setInputType("text");
-      } else {
-        setInputType("password");
-      }
+      setInputType(prev => prev === "password" ? "text" : "password");
+    };
+
+    // Determine input class based on status
+    const getInputClass = () => {
+      const baseClass = "form-control";
+      if (error || status === "error") return `${baseClass} is-invalid`;
+      if (status === "success") return `${baseClass} is-valid`;
+      return baseClass;
     };
 
     return (
       <div
         className={clsx(
-          "relative flex flex-col items-start",
-          fullWidth && "w-full",
+          "position-relative",
+          fullWidth && "w-100",
           containerClassName
         )}
       >
-        <div className={clsx("relative", fullWidth && "w-full")}>
+        {/* Label */}
+        {label && (
+          <label htmlFor={inputId} className="form-label fw600 dark-color">
+            {label}
+            {required && <span className="text-danger ms-1">*</span>}
+          </label>
+        )}
+
+        {/* Input wrapper for icons */}
+        <div className="position-relative">
+          {/* Left Icon */}
+          {leftIcon && (
+            <div className="position-absolute top-50 start-0 translate-middle-y ms-3 z-1">
+              {leftIcon}
+            </div>
+          )}
+
+          {/* Input */}
           <input
             ref={ref}
             id={inputId}
             type={inputType}
-            autoComplete="off"
-            placeholder=" "
+            autoComplete={autoComplete || "off"}
+            placeholder={placeholder || " "}
             disabled={disabled}
-            {...props}
             className={clsx(
-              "block px-4 w-full text-sm  bg-transparent rounded-button border appearance-none focus:outline-none focus:ring-0  peer ",
-              fullWidth && "w-full",
-              !!rightIcon && "pr-8",
-              !!leftIcon && "pl-10",
-              label ? "pt-4 pb-[12px]" : "py-[19px]",
-              status === "default" && "border-gray-link focus-visible:border-primary",
-              status === "error" && "border-badge-product focus-visible:border-red-700",
-              status === "success" && "border-green-500 focus-visible:border-red-700",
-              disabled && "text-gray-field",
+              getInputClass(),
+              leftIcon && "ps-5", // Padding left for left icon
+              rightIcon && "pe-5", // Padding right for right icon
               className
             )}
+            {...props}
           />
+
+          {/* Password Toggle Icon */}
           {type === "password" && (
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 z-10">
-              <IconButton rounded type="button" onClick={handleChangeType}>
-                {inputType === "password" ? (
-                  <i className="ri-eye-line" />
-                ) : (
-                  <i className="ri-eye-close-line" />
-                )}
-              </IconButton>
-            </div>
+            <button
+              type="button"
+              onClick={handleChangeType}
+              className="position-absolute top-50 end-0 translate-middle-y me-3 border-0 bg-transparent z-1"
+              style={{ cursor: 'pointer' }}
+            >
+              <i className={inputType === "password" ? "ri-eye-line" : "ri-eye-close-line"} />
+            </button>
           )}
-          {!!leftIcon && (
-            <div className="absolute inset-y-0 left-3 flex items-center pr-3 z-[4]">{leftIcon}</div>
-          )}
-          {!!rightIcon && (
-            <div className="absolute inset-y-0 right-0 flex items-center pr-1.5 z-[4]">
+
+          {/* Right Icon (if not password) */}
+          {rightIcon && type !== "password" && (
+            <div className="position-absolute top-50 end-0 translate-middle-y me-3 z-1">
               {rightIcon}
             </div>
           )}
-
-          <label
-            htmlFor={inputId}
-            className={clsx(
-              "absolute text-sm text-gray-placeholder duration-300 transform -translate-y-3 scale-75 top-3.5 origin-[0] peer-focus:text-black dark:peer-focus:text-white peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3.5",
-              leftIcon ? "left-10 rtl:right-10 rtl:left-auto" : "left-4 rtl:right-0 rtl:left-auto",
-              disabled && "text-gray-field"
-            )}
-          >
-            {label}
-            {required && "*"}
-          </label>
         </div>
+
+        {/* Error Message */}
         {error && (
-          <p role="alert" className="text-red text-sm mt-1">
+          <div className="invalid-feedback d-block" role="alert">
             {t(error)}
-          </p>
+          </div>
         )}
       </div>
     );
   }
 );
+
+Input.displayName = "Input";

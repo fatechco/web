@@ -2,22 +2,21 @@ import React, { forwardRef, Ref } from "react";
 import clsx from "clsx";
 import CircularLoading from "@/assets/icons/circular-loading";
 
-const colors = {
-  primary: "bg-primary text-[var(--primary-button-font-color)] disabled:bg-gray-placeholder",
-  black: "bg-dark text-white disabled:bg-gray-placeholder dark:bg-white dark:text-dark",
-  white: "bg-white text-black",
-  gray: "bg-gray-segment text-dark",
-  blackOutlined: "border border-footerBg",
-  whiteOutlined: "border border-white text-white",
-  giantsOrange:
-    "bg-giantsOrange text-white disabled:bg-gray-placeholder dark:bg-white dark:text-dark",
+const variants = {
+  primary: "btn btn-primary",
+  black: "btn btn-dark",
+  white: "btn btn-light",
+  gray: "btn btn-secondary",
+  blackOutlined: "btn btn-outline-dark",
+  whiteOutlined: "btn btn-outline-light",
+  giantsOrange: "btn btn-warning", // hoặc custom class nếu cần
 } as const;
 
 const sizes = {
-  xsmall: "text-xs font-medium py-2 px-4",
-  small: "text-sm font-semibold py-2.5 px-6",
-  medium: "text-base font-medium py-[13px] px-8",
-  large: "text-base font-semibold py-[18px] md:px-14 px-6",
+  xsmall: "btn-sm px-3 py-1 text-xs",
+  small: "btn-sm px-4 py-2",
+  medium: "btn-md px-6 py-2.5",
+  large: "btn-lg px-8 py-3",
 } as const;
 
 type AsProp<C extends React.ElementType> = {
@@ -45,7 +44,7 @@ type ButtonProps<C extends React.ElementType> = PolymorphicComponentPropWithRef<
   C,
   {
     size?: keyof typeof sizes;
-    color?: keyof typeof colors;
+    variant?: keyof typeof variants;
     rounded?: boolean;
     fullWidth?: boolean;
     leftIcon?: React.ReactElement<any>;
@@ -65,7 +64,7 @@ export const Button: ButtonComponent = forwardRef(
   <C extends React.ElementType = "button">(
     {
       as,
-      color = "primary",
+      variant = "primary",
       size = "large",
       rounded,
       fullWidth,
@@ -76,32 +75,65 @@ export const Button: ButtonComponent = forwardRef(
       leftIcon,
       rightIcon,
       onClick,
+      type = "button",
       ...props
     }: ButtonProps<C>,
     ref: React.Ref<HTMLButtonElement>
   ) => {
     const Component = as || "button";
+    
+    // Combine Bootstrap classes
+    const buttonClasses = clsx(
+      "btn", // Base Bootstrap button class
+      variants[variant],
+      sizes[size],
+      rounded && "rounded-pill", // Bootstrap class for rounded buttons
+      fullWidth && "w-100", // Bootstrap width 100% class
+      loading && "position-relative", // Position relative for loading spinner
+      className
+    );
+
     return (
       <Component
         ref={ref}
-        className={clsx(
-          "outline-none focus:outline-none rounded-button overflow-hidden text-ellipsis whitespace-nowrap  inline-flex items-center gap-2 justify-center active:translate-y-px hover:brightness-95 focus-ring disabled:cursor-not-allowed disabled:active:translate-y-0",
-          "disabled:cursor-not-allowed disabled:opacity-50",
-          sizes[size],
-          rounded && "rounded-full",
-          fullWidth && "!w-full",
-          colors[color],
-          loading && "opacity-70 active:translate-y-0",
-          className
-        )}
+        className={buttonClasses}
         onClick={!disabled && !loading ? onClick : undefined}
-        disabled={disabled}
+        disabled={disabled || loading}
+        type={type}
         {...props}
       >
-        {loading ? <CircularLoading size={24} /> : leftIcon}
+        {/* Loading Spinner */}
+        {loading && (
+          <span 
+            className="spinner-border spinner-border-sm me-2" 
+            role="status" 
+            aria-hidden="true"
+          />
+        )}
+        
+        {/* Left Icon */}
+        {!loading && leftIcon && (
+          <span className={clsx(children && "me-2")}>
+            {leftIcon}
+          </span>
+        )}
+        
+        {/* Button Text */}
         {children}
-        {rightIcon}
+        
+        {/* Right Icon */}
+        {!loading && rightIcon && (
+          <span className={clsx(children && "ms-2")}>
+            {rightIcon}
+          </span>
+        )}
+        
+        {/* Loading text for screen readers */}
+        {loading && <span className="visually-hidden">Loading...</span>}
       </Component>
     );
   }
 );
+
+// Display name for dev tools
+Button.displayName = "Button";
