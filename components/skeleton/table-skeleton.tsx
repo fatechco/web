@@ -45,8 +45,8 @@ export const TableSkeleton = ({
                 <ContentLoader
                   speed={2}
                   width={getColumnWidth(colIndex)}
-                  height={24}
-                  viewBox={`0 0 ${parseInt(getColumnWidth(colIndex))} 24`}
+                  height={30}
+                  viewBox={`0 0 ${parseInt(getColumnWidth(colIndex))} 30`}
                   backgroundColor="#f3f3f3"
                   foregroundColor="#ecebeb"
                 >
@@ -56,7 +56,7 @@ export const TableSkeleton = ({
                     rx="4" 
                     ry="4" 
                     width={parseInt(getColumnWidth(colIndex))} 
-                    height="20" 
+                    height="30" 
                   />
                 </ContentLoader>
               </th>
