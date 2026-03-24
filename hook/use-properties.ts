@@ -1,14 +1,15 @@
 // hook/use-properties.ts
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { propertyService } from '@/services/property';
-import { Property, PropertyFilters } from '@/types/property';
+import type { Property, PropertyFilters } from '@/types/property';
 import { useDebounce } from './use-debounce';
-import { useSettings } from './use-settings';
 import useSettingsStore from '@/global-store/settings';
 import useAddressStore from '@/global-store/address';
 import { error, success } from '@/components/alert';
-import { Paginate } from '@/types/global';
+import type { Paginate, DefaultResponse } from '@/types/global';
 
 interface UsePropertiesProps {
   initialFilters?: PropertyFilters;
@@ -23,6 +24,7 @@ export const useProperties = ({
   type = 'public',
   propertyId
 }: UsePropertiesProps = {}) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   
   const language = useSettingsStore((state) => state.selectedLanguage);
@@ -40,23 +42,27 @@ export const useProperties = ({
   const isFirstRender = useRef(true);
   const debouncedSearch = useDebounce(searchInput, 500);
 
-  // Build query params with lang, currency, region
   const buildQueryParams = useCallback(() => {
     const params: Record<string, any> = {
       ...filters,
       lang: language?.locale,
-      currency_id: currency?.id
+      currency_id: currency?.id,
+      region_id: country?.region_id,
     };
 
-    // Add search if present
     if (debouncedSearch) {
       params.keyword = debouncedSearch;
     }
 
-    return params;
-  }, [filters, language, currency, debouncedSearch]);
+    Object.keys(params).forEach(key => {
+      if (params[key] === undefined || params[key] === null || params[key] === '') {
+        delete params[key];
+      }
+    });
 
-  // Update filters when debounced search changes
+    return params;
+  }, [filters, language, currency, country, debouncedSearch]);
+
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -66,11 +72,10 @@ export const useProperties = ({
     setFilters(prev => ({
       ...prev,
       keyword: debouncedSearch || undefined,
-      page: 1 // Reset page when searching
+      page: 1
     }));
   }, [debouncedSearch]);
 
-  // Main query based on type
   const queryKey = ['properties', type, buildQueryParams()];
   
   const { 
@@ -78,10 +83,7 @@ export const useProperties = ({
     isLoading, 
     isFetching,
     error: queryError,
-    refetch,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage
+    refetch
   } = useQuery<Paginate<Property>>({
     queryKey,
     queryFn: async () => {
@@ -95,7 +97,7 @@ export const useProperties = ({
         case 'vip':
           return propertyService.getVip(params);
         case 'similar':
-          if (!propertyId) throw new Error('Property ID required for similar properties');
+          if (!propertyId) throw new Error(t('property.similar.required'));
           return propertyService.getSimilar(propertyId, params);
         default:
           return propertyService.search(params);
@@ -103,88 +105,24 @@ export const useProperties = ({
     },
     enabled: enabled && (type !== 'similar' || !!propertyId),
     keepPreviousData: true,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Get property by UUID
-  const useGetProperty = (uuid: string, options?: { enabled?: boolean }) => {
-    return useQuery({
-      queryKey: ['property', uuid, locale, currency?.id, country?.region_id],
-      queryFn: () => propertyService.getByUuid(uuid, {
-        lang: locale,
-        currency_id: currency?.id,
-        region_id: country?.region_id,
-      }),
-      enabled: options?.enabled !== false && !!uuid,
+  const getProperty = useCallback((uuid: string) => {
+    return propertyService.getByUuid(uuid, {
+      lang: language?.locale,
+      currency_id: currency?.id,
+      region_id: country?.region_id,
     });
-  };
+  }, [language, currency, country]);
 
-  // Get user stats
-  const useStats = () => {
-    return useQuery({
-      queryKey: ['property-stats', locale, currency?.id],
-      queryFn: () => propertyService.getMyStats({
-        lang: locale,
-        currency_id: currency?.id,
-      }),
+  const getStats = useCallback(() => {
+    return propertyService.getMyStats({
+      lang: language?.locale,
+      currency_id: currency?.id,
     });
-  };
+  }, [language, currency]);
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (data: FormData) => propertyService.create(data),
-    onSuccess: () => {
-      success('Property created successfully');
-      queryClient.invalidateQueries({ queryKey: ['properties', 'user'] });
-    },
-    onError: (err: Error) => {
-      error(err.message);
-    },
-  });
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: FormData }) => 
-      propertyService.update(id, data),
-    onSuccess: () => {
-      success('Property updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['properties', 'user'] });
-    },
-    onError: (err: Error) => {
-      error(err.message);
-    },
-  });
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: (ids: number[]) => propertyService.delete(ids),
-    onSuccess: () => {
-      success('Properties deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['properties', 'user'] });
-    },
-    onError: (err: Error) => {
-      error(err.message);
-    },
-  });
-
-  // Toggle featured
-  const toggleFeaturedMutation = useMutation({
-    mutationFn: (id: number) => propertyService.toggleFeatured(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['properties'] });
-    },
-  });
-
-  // Toggle VIP
-  const toggleVipMutation = useMutation({
-    mutationFn: ({ id, days }: { id: number; days?: number }) => 
-      propertyService.toggleVip(id, days),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['properties'] });
-    },
-  });
-
-  // Actions
   const handleSearch = useCallback((search: string) => {
     setSearchInput(search);
   }, []);
@@ -193,7 +131,7 @@ export const useProperties = ({
     setFilters(prev => ({
       ...prev,
       ...newFilters,
-      page: 1 // Reset page when filters change
+      page: 1
     }));
   }, []);
 
@@ -223,57 +161,180 @@ export const useProperties = ({
   }, [queryClient, type]);
 
   return {
-    // Data
     properties: data?.data || [],
     paginateInfo: data,
     total: data?.meta?.total || 0,
     currentPage: data?.meta?.current_page || 1,
     lastPage: data?.meta?.last_page || 1,
     perPage: data?.meta?.per_page || 10,
-    
-    // Loading states
     isLoading,
     isFetching,
-    isFetchingNextPage,
-    hasNextPage,
-    isCreating: createMutation.isLoading,
-    isUpdating: updateMutation.isLoading,
-    isDeleting: deleteMutation.isLoading,
-    
-    // Filters state
     filters,
     searchInput,
-    
-    // Actions
     handleSearch,
     handleFilterChange,
     handlePageChange,
     handleSortChange,
     handlePageSizeChange,
     resetFilters,
-    
-    // Mutations
-    createProperty: createMutation.mutate,
-    updateProperty: updateMutation.mutate,
-    deleteProperties: deleteMutation.mutate,
-    toggleFeatured: toggleFeaturedMutation.mutate,
-    toggleVip: toggleVipMutation.mutate,
-    
-    // Utilities
     refresh,
     refetch,
-    fetchNextPage,
-    
-    // Hooks
-    useGetProperty,
-    useStats,
-    
-    // Error
+    getProperty,
+    getStats,
     error: queryError,
   };
 };
 
-// Specialized hooks for different use cases
+// ============== MUTATION HOOKS ==============
+
+/**
+ * Hook tạo mới property
+ */
+export const useCreateProperty = () => {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      return propertyService.create(formData);
+    },
+    onSuccess: (response) => {
+      success(t('property.created.success'));
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['user-properties'] });
+      router.push('/dashboard/my-properties');
+    },
+    onError: (err: any) => {
+      const errorMessage = err?.message || t('property.created.error');
+      error(errorMessage);
+    },
+  });
+  
+  return {
+    createProperty: mutation.mutate,
+    isCreating: mutation.isLoading,
+    error: mutation.error,
+  };
+};
+
+/**
+ * Hook cập nhật property
+ */
+export const useUpdateProperty = () => {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: async ({ id, formData }: { id: number; formData: FormData }) => {
+      return propertyService.update(id, formData);
+    },
+    onSuccess: (_, variables) => {
+      success(t('property.updated.success'));
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['property', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-properties'] });
+      router.push('/dashboard/my-properties');
+    },
+    onError: (err: any) => {
+      const errorMessage = err?.message || t('property.updated.error');
+      error(errorMessage);
+    },
+  });
+  
+  return {
+    updateProperty: mutation.mutate,
+    isUpdating: mutation.isLoading,
+    error: mutation.error,
+  };
+};
+
+/**
+ * Hook xóa property
+ */
+export const useDeleteProperty = () => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: async (ids: number[]) => {
+      return propertyService.delete(ids);
+    },
+    onSuccess: () => {
+      success(t('property.deleted.success'));
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['user-properties'] });
+    },
+    onError: (err: any) => {
+      const errorMessage = err?.message || t('property.deleted.error');
+      error(errorMessage);
+    },
+  });
+  
+  return {
+    deleteProperty: mutation.mutate,
+    isDeleting: mutation.isLoading,
+    error: mutation.error,
+  };
+};
+
+/**
+ * Hook toggle featured status
+ */
+export const useToggleFeatured = () => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: async (id: number) => {
+      return propertyService.toggleFeatured(id);
+    },
+    onSuccess: () => {
+      success(t('property.featured.toggled'));
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+    },
+    onError: (err: any) => {
+      const errorMessage = err?.message || t('property.featured.error');
+      error(errorMessage);
+    },
+  });
+  
+  return {
+    toggleFeatured: mutation.mutate,
+    isToggling: mutation.isLoading,
+  };
+};
+
+/**
+ * Hook toggle VIP status
+ */
+export const useToggleVip = () => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  
+  const mutation = useMutation({
+    mutationFn: async ({ id, days }: { id: number; days?: number }) => {
+      return propertyService.toggleVip(id, days);
+    },
+    onSuccess: () => {
+      success(t('property.vip.toggled'));
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+    },
+    onError: (err: any) => {
+      const errorMessage = err?.message || t('property.vip.error');
+      error(errorMessage);
+    },
+  });
+  
+  return {
+    toggleVip: mutation.mutate,
+    isToggling: mutation.isLoading,
+  };
+};
+
+// ============== SPECIALIZED HOOKS ==============
+
 export const usePublicProperties = (filters?: PropertyFilters) => {
   return useProperties({ initialFilters: filters, type: 'public' });
 };
@@ -299,8 +360,41 @@ export const useSimilarProperties = (propertyId: number, filters?: PropertyFilte
   });
 };
 
-// Hook for single property
+// ============== SINGLE PROPERTY HOOK ==============
+
 export const useProperty = (uuid: string) => {
-  const { useGetProperty } = useProperties();
-  return useGetProperty(uuid);
+  const language = useSettingsStore((state) => state.selectedLanguage);
+  const currency = useSettingsStore((state) => state.selectedCurrency);
+  const country = useAddressStore((state) => state.country);
+  
+  return useQuery<DefaultResponse<Property>>({
+    queryKey: ['property', uuid, language?.locale, currency?.id, country?.region_id],
+    queryFn: () => propertyService.getByUuid(uuid, {
+      lang: language?.locale,
+      currency_id: currency?.id,
+      region_id: country?.region_id,
+    }),
+    enabled: !!uuid,
+  });
+};
+
+/**
+ * Hook lấy chi tiết property để edit (bao gồm translations)
+ */
+export const usePropertyForEdit = (uuid: string) => {
+  const language = useSettingsStore((state) => state.selectedLanguage);
+  const currency = useSettingsStore((state) => state.selectedCurrency);
+  const country = useAddressStore((state) => state.country);
+  
+  return useQuery<DefaultResponse<Property>>({
+    queryKey: ['property-edit', uuid, language?.locale, currency?.id],
+    queryFn: () => propertyService.getByUuid(uuid, {
+      lang: language?.locale,
+      currency_id: currency?.id,
+      region_id: country?.region_id,
+      with: 'translations,images,amenities',
+    }),
+    enabled: !!uuid,
+    staleTime: 0, // Don't cache for edit form
+  });
 };

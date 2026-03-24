@@ -1,39 +1,64 @@
-import { Currency, Language } from "@/types/global";
+// global-store/settings.ts
+import { Currency, Language, Setting } from "@/types/global";
+import { Country } from "@/types/location";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-interface SettingsStoreState {
-  selectedLanguage?: Language;
-  selectedCurrency?: Currency;
-  updateSelectedLanguage: (lang?: Language) => void;
-  updateSelectedCurrency: (currency?: Currency) => void;
-  settings?: Record<string, string>;
-  updateSettings: (settings: Record<string, string>) => void;
-  updateDefaultCurrency: (currency: Currency) => void;
-  defaultCurrency?: Currency;
-  isLanguageSelectModalOpen: boolean;
-  openLanguageSelectModal: () => void;
-  closeLanguageSelectModal: () => void;
-  isCurrencySelectModalOpen: boolean;
-  openCurrencySelectModal: () => void;
-  closeCurrencySelectModal: () => void;
+interface SettingsStore {
+  // Lists
+  languages: Language[];
+  currencies: Currency[];
+  countries: Country[];
+  
+  // Selected
+  language: any | null;
+  currency: any | null;
+  country: any | null;
+  
+  // Settings
+  settings: Setting[];
+  
+  // Actions
+  setLanguages: (languages: any[]) => void;
+  setCurrencies: (currencies: any[]) => void;
+  setCountries: (countries: any[]) => void;
+  setLanguage: (language: any) => void;
+  setCurrency: (currency: any) => void;
+  setCountry: (country: any) => void;
+  setSettings: (settings: any) => void;
 }
 
-const useSettingsStore = create<SettingsStoreState>()(
+const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
-      isLanguageSelectModalOpen: false,
-      isCurrencySelectModalOpen: false,
-      updateSelectedCurrency: (selectedCurrency) => set({ selectedCurrency }),
-      updateSelectedLanguage: (selectedLanguage) => set({ selectedLanguage }),
-      updateSettings: (settings) => set({ settings }),
-      updateDefaultCurrency: (currency) => set({ defaultCurrency: currency }),
-      openLanguageSelectModal: () => set({ isLanguageSelectModalOpen: true }),
-      closeLanguageSelectModal: () => set({ isLanguageSelectModalOpen: false }),
-      openCurrencySelectModal: () => set({ isCurrencySelectModalOpen: true }),
-      closeCurrencySelectModal: () => set({ isCurrencySelectModalOpen: false }),
+      languages: [],
+      currencies: [],
+      countries: [],
+      language: null,
+      currency: null,
+      country: null,
+      settings: [],
+
+      setLanguages: (languages) => set({ languages }),
+      setCurrencies: (currencies) => set({ currencies }),
+      setCountries: (countries) => set({ countries }),
+      setLanguage: (language) => set({ language }),
+      setCurrency: (currency) => set({ currency }),
+      setCountry: (country) => set({ country }),
+      setSettings: (settings) => set({ settings }),
     }),
-    { name: "settings" }
+    {
+      name: "app-settings",
+      partialize: (state) => ({
+        languages: state.languages,
+        currencies: state.currencies,
+        countries: state.countries,
+        language: state.language,
+        currency: state.currency,
+        country: state.country,
+        settings: state.settings,
+      }),
+    }
   )
 );
 

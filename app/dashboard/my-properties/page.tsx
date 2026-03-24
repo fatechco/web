@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useProperties } from "@/hook/use-properties";
 import { TableSkeleton } from "@/components/skeleton/table-skeleton";
 import FilterHeader from "@/components/real-estate/property/dashboard/dashboard-my-properties/FilterHeader";
@@ -9,7 +9,6 @@ import Pagination from "@/components/real-estate/property/Pagination";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
 // /import { PlusIcon } from "@/assets/icons/plus";
-import DashboardLayout from "@/components/real-estate/dashboard/DashboardLayout";
 
 const DashboardMyProperties = () => {
   const { t } = useTranslation();
@@ -79,7 +78,83 @@ const DashboardMyProperties = () => {
 
   return (
    <>
-      <div className="row align-items-center pb40">
+      
+        {/* Quick Stats Row */}
+<div className="row mt-5 g-4">
+  <div className="col-md-3 col-sm-6">
+    <div className="stat-card stat-card-primary">
+      <div className="stat-card-inner">
+        <div className="stat-icon-wrapper">
+          <span className="stat-icon flaticon-home" />
+        </div>
+        <div className="stat-content">
+          <h3 className="stat-number">{total || 0}</h3>
+          <p className="stat-label">{t('total.properties')}</p>
+        </div>
+      </div>
+      <div className="stat-trend stat-trend-up">
+        <i className="fas fa-arrow-up" />
+        <span>+12%</span>
+      </div>
+    </div>
+  </div>
+  
+  <div className="col-md-3 col-sm-6">
+    <div className="stat-card stat-card-success">
+      <div className="stat-card-inner">
+        <div className="stat-icon-wrapper">
+          <span className="stat-icon flaticon-checkmark" />
+        </div>
+        <div className="stat-content">
+          <h3 className="stat-number">{properties.filter(p => p.status === 'published' || p.status === 'available').length}</h3>
+          <p className="stat-label">{t('published')}</p>
+        </div>
+      </div>
+      <div className="stat-trend stat-trend-up">
+        <i className="fas fa-arrow-up" />
+        <span>+5%</span>
+      </div>
+    </div>
+  </div>
+  
+  <div className="col-md-3 col-sm-6">
+    <div className="stat-card stat-card-warning">
+      <div className="stat-card-inner">
+        <div className="stat-icon-wrapper">
+          <span className="stat-icon flaticon-clock" />
+        </div>
+        <div className="stat-content">
+          <h3 className="stat-number">{properties.filter(p => p.status === 'pending').length}</h3>
+          <p className="stat-label">{t('pending')}</p>
+        </div>
+      </div>
+      <div className="stat-trend stat-trend-down">
+        <i className="fas fa-arrow-down" />
+        <span>-3%</span>
+      </div>
+    </div>
+  </div>
+  
+  <div className="col-md-3 col-sm-6">
+    <div className="stat-card stat-card-info">
+      <div className="stat-card-inner">
+        <div className="stat-icon-wrapper">
+          <span className="stat-icon flaticon-view" />
+        </div>
+        <div className="stat-content">
+          <h3 className="stat-number">{properties.reduce((sum, p) => sum + (p.views || 0), 0).toLocaleString()}</h3>
+          <p className="stat-label">{t('total.views')}</p>
+        </div>
+      </div>
+      <div className="stat-trend stat-trend-up">
+        <i className="fas fa-arrow-up" />
+        <span>+23%</span>
+      </div>
+    </div>
+  </div>
+
+      </div>
+      <div className="row align-items-center mt30 pb40">
         <div className="col-xxl-3">
           <div className="dashboard_title_area">
             <h2>{t('my.properties')}</h2>
@@ -134,6 +209,7 @@ const DashboardMyProperties = () => {
         </Link>
       </div>
 
+    
       <div className="row">
         <div className="col-xl-12">
           <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
@@ -229,59 +305,175 @@ const DashboardMyProperties = () => {
         </div>
       </div>
 
-      {/* Quick Stats Row */}
-      <div className="row mt30">
-        <div className="col-md-3 col-sm-6">
-          <div className="ff_one">
-            <div className="icon">
-              <span className="flaticon-home" />
-            </div>
-            <div className="detais">
-              <div className="timer">{total || 0}</div>
-              <p>{t('total.properties')}</p>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3 col-sm-6">
-          <div className="ff_one">
-            <div className="icon">
-              <span className="flaticon-checkmark" />
-            </div>
-            <div className="detais">
-              <div className="timer">
-                {properties.filter(p => p.status === 'published').length}
-              </div>
-              <p>{t('published')}</p>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3 col-sm-6">
-          <div className="ff_one">
-            <div className="icon">
-              <span className="flaticon-clock" />
-            </div>
-            <div className="detais">
-              <div className="timer">
-                {properties.filter(p => p.status === 'pending').length}
-              </div>
-              <p>{t('pending')}</p>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3 col-sm-6">
-          <div className="ff_one">
-            <div className="icon">
-              <span className="flaticon-view" />
-            </div>
-            <div className="detais">
-              <div className="timer">
-                {properties.reduce((sum, p) => sum + (p.views || 0), 0)}
-              </div>
-              <p>{t('total.views')}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+        <style jsx>{`
+        .stat-card {
+          position: relative;
+          background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+          border-radius: 24px;
+          padding: 1.5rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          transition: all 0.3s ease;
+          overflow: hidden;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .stat-card-inner {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .stat-icon-wrapper {
+          width: 60px;
+          height: 60px;
+          border-radius: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+          transition: all 0.3s ease;
+        }
+
+        .stat-card:hover .stat-icon-wrapper {
+          transform: scale(1.05);
+        }
+
+        .stat-icon {
+          font-size: 32px;
+          line-height: 1;
+        }
+
+        .stat-card-primary .stat-icon {
+          color: #3b82f6;
+        }
+
+        .stat-card-primary .stat-icon-wrapper {
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+        }
+
+        .stat-card-success .stat-icon {
+          color: #10b981;
+        }
+
+        .stat-card-success .stat-icon-wrapper {
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+        }
+
+        .stat-card-warning .stat-icon {
+          color: #f59e0b;
+        }
+
+        .stat-card-warning .stat-icon-wrapper {
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+        }
+
+        .stat-card-info .stat-icon {
+          color: #8b5cf6;
+        }
+
+        .stat-card-info .stat-icon-wrapper {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+        }
+
+        .stat-content {
+          flex: 1;
+        }
+
+        .stat-number {
+          font-size: 28px;
+          font-weight: 700;
+          margin: 0;
+          line-height: 1.2;
+          color: #1f2937;
+        }
+
+        .stat-label {
+          font-size: 14px;
+          color: #6b7280;
+          margin: 0;
+          margin-top: 4px;
+          font-weight: 500;
+        }
+
+        .stat-trend {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 12px;
+          font-weight: 600;
+          padding: 4px 8px;
+          border-radius: 20px;
+          background: rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-trend-up {
+          color: #10b981;
+          background: rgba(16, 185, 129, 0.1);
+        }
+
+        .stat-trend-down {
+          color: #ef4444;
+          background: rgba(239, 68, 68, 0.1);
+        }
+
+        .stat-trend i {
+          font-size: 10px;
+        }
+
+        /* Animation cho số đếm */
+        @keyframes countUp {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .stat-number {
+          animation: countUp 0.5s ease-out;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .stat-card {
+            padding: 1rem;
+          }
+          
+          .stat-icon-wrapper {
+            width: 48px;
+            height: 48px;
+          }
+          
+          .stat-icon {
+            font-size: 24px;
+          }
+          
+          .stat-number {
+            font-size: 22px;
+          }
+          
+          .stat-label {
+            font-size: 12px;
+          }
+          
+          .stat-trend {
+            font-size: 10px;
+            padding: 2px 6px;
+          }
+        }
+      `}</style>
+
    </>  
   );
 };

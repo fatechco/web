@@ -1,0 +1,60 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useAmenities } from "@/hook/use-amenity";
+
+interface AmenitiesProps {
+  formData: any;
+  updateFormData: (field: string, value: any) => void;
+}
+
+const Amenities = ({ formData, updateFormData }: AmenitiesProps) => {
+  const { amenities, isLoading } = useAmenities();
+  const [selectedAmenities, setSelectedAmenities] = useState<number[]>(formData.amenities || []);
+
+  useEffect(() => {
+    updateFormData("amenities", selectedAmenities);
+  }, [selectedAmenities]);
+
+  const toggleAmenity = (amenityId: number) => {
+    setSelectedAmenities(prev =>
+      prev.includes(amenityId)
+        ? prev.filter(id => id !== amenityId)
+        : [...prev, amenityId]
+    );
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-5">Loading amenities...</div>;
+  }
+
+  // Split amenities into 3 columns
+  const columns = [[], [], []];
+  amenities?.forEach((amenity: any, index: number) => {
+    columns[index % 3].push(amenity);
+  });
+
+  return (
+    <div className="row">
+      {columns.map((column, colIndex) => (
+        <div key={colIndex} className="col-sm-6 col-lg-4">
+          <div className="checkbox-style1">
+            {column.map((amenity: any) => (
+              <label key={amenity.id} className="custom_checkbox">
+                {amenity.name}
+                <input
+                  type="checkbox"
+                  checked={selectedAmenities.includes(amenity.id)}
+                  onChange={() => toggleAmenity(amenity.id)}
+                />
+                <span className="checkmark" />
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default Amenities;

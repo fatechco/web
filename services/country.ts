@@ -1,15 +1,16 @@
-import { DefaultResponse, Paginate, ParamsType, Country, City } from "@/types/global";
+import type { DefaultResponse, Paginate, ParamsType } from "@/types/global";
 import fetcher from "@/lib/fetcher";
 import { buildUrlQueryParams } from "@/utils/build-url-query-params";
+import { Country, Province } from "@/types/location";
 
 export const countryService = {
   getAll: (params?: ParamsType) =>
-    fetcher<Paginate<Country>>(buildUrlQueryParams("v1/rest/countries", params)),
+    fetcher<DefaultResponse<Country[]>>(buildUrlQueryParams("v1/rest/countries/all", params)),
   get: (id: number, params?: ParamsType) =>
     fetcher<DefaultResponse<Country>>(buildUrlQueryParams(`v1/rest/countries/${id}`, params)),
 };
 
-export const cityService = {
+export const provinceService = {
   get: (id: number, params?: ParamsType) =>
-    fetcher<DefaultResponse<City>>(`v1/rest/cities/${id}`, params),
+    fetcher<DefaultResponse<Province>>(`v1/rest/provinces/${id}`, params),
 };

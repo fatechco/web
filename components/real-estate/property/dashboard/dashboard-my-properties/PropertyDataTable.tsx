@@ -61,13 +61,13 @@ const PropertyDataTable = ({
                     height={94}
                     className="w-100"
                     src={property.images || "/placeholder.png"}
-                    alt={property.name}
+                    alt={property.title}
                   />
                 </div>
                 <div className="list-content py-0 p-0 mt-2 mt-xxl-0 ps-xxl-4">
                   <div className="h6 list-title">
                     <Link href={`/property/${property.id}`}>
-                      {property.name}
+                      {property.title}
                     </Link>
                   </div>
                   <p className="list-text mb-0">{property.location}</p>

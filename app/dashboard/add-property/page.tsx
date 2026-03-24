@@ -8,7 +8,6 @@ const DashboardAddProperty = () => {
   return (
     <>
       
-
               <div className="row align-items-center pb40">
                 <div className="col-lg-12">
                   <div className="dashboard_title_area">

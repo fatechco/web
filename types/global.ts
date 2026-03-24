@@ -31,12 +31,6 @@ export interface Paginate<T> {
   };
 }
 
-export interface Translation {
-  id: number;
-  locale: string;
-  title: string;
-}
-
 export interface Coordinate {
   lat: number;
   lng: number;
@@ -87,57 +81,6 @@ export interface Location {
   longitude: string;
 }
 
-export interface Region {
-  id: number;
-  active: boolean;
-  translation: Translation | null;
-}
-
-export interface Country {
-  img: string;
-  id: number;
-  active: boolean;
-  region_id: number;
-  translation: Translation | null;
-  cities_count: number;
-  code: string;
-  // eslint-disable-next-line no-use-before-define
-  city?: City | null | undefined;
-}
-
-export interface City extends Country {
-  country_id: number;
-}
-
-export interface Area {
-  id: number;
-  country_id: number;
-  city_id: number;
-  region_id: number;
-  translation: Translation | null;
-  active: boolean;
-}
-
-export interface DeliveryPoint {
-  address: Record<string, string>;
-  area: Area | null;
-  country: Country | null;
-  city: City | null;
-  region: Region | null;
-  location: Location;
-  fitting_rooms: number;
-  id: number;
-  img: string;
-  price: number;
-  translation: Translation | null;
-  area_id: number;
-  country_id: number;
-  city_id: number;
-  region_id: number;
-  created_at: string;
-  updated_at: string;
-  working_days: WorkingDay[];
-}
 
 export interface Payment {
   tag: string;
@@ -196,14 +139,6 @@ export interface LatLng {
   lng: number;
 }
 
-interface TermsTranslation extends Translation {
-  description: string;
-}
-
-export interface Term {
-  id: number;
-  translation?: TermsTranslation;
-}
 
 export interface SearchPrediction {
   id: string;
@@ -217,20 +152,15 @@ export interface SearchPrediction {
   };
 }
 
-interface ReferralTranslation extends Translation {
-  description: string;
-  faq: string;
-}
 
 export interface Referral {
   id: number;
   price_to: number;
   price_from: number;
-  translation: ReferralTranslation | null;
   img: string;
 }
 
-interface PageTranslation extends Translation {
+interface PageTranslation {
   description: string;
 }
 
@@ -238,7 +168,7 @@ export interface Page {
   id: number;
   img?: string;
   type: string;
-  translation: PageTranslation | null;
+  
   buttons?: {
     app_store_button_link: string;
     google_play_button_link: string;
