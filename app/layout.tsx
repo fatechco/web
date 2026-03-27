@@ -16,6 +16,9 @@ import {
 import { initService } from "@/services/init";
 import Providers from "./providers";
 
+import DefaultHeader from "@/components/real-estate/common/DefaultHeader";
+import Footer from "@/components/real-estate/common/default-footer";
+
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
 
 export const generateMetadata = async (): Promise<Metadata> => {
@@ -72,7 +75,17 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
           settings={initData.settings}
           defaultCountry={initData.defaultCountry}
         >
+        {/* Main Header Nav */}
+        <DefaultHeader />
+        {/* End Main Header Nav */}
+
           {children}
+
+          {/* Start Our Footer */}
+          <section className="footer-style1 pt60 pb-0">
+            <Footer />
+          </section>
+          {/* End Our Footer */}
           <NextTopLoader color={primaryColor} showSpinner={false} />
         </Providers>
       </body>

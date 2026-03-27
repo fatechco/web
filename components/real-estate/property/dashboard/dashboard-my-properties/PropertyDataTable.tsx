@@ -6,10 +6,12 @@ import { Tooltip as ReactTooltip } from "react-tooltip";
 
 
 interface PropertyDataTableProps {
-  properties: Property[];
-  onDelete: (id: number) => void;
+  onDelete: (id: number) => void; // Chỉ gọi khi click delete, không confirm
   onEdit: (property: Property) => void;
   isDeleting?: boolean;
+  selectedIds?: number[];
+  onSelect?: (id: number, checked: boolean) => void;
+  onSelectAll?: (checked: boolean) => void;
 }
 
 const getStatusStyle = (status: string) => {
@@ -56,12 +58,14 @@ const PropertyDataTable = ({
             <th scope="row">
               <div className="listing-style1 dashboard-style d-xxl-flex align-items-center mb-0">
                 <div className="list-thumb">
+         
                   <Image
                     width={110}
                     height={94}
                     className="w-100"
-                    src={property.images || "/placeholder.png"}
+                    src={property.primary_image || "/placeholder.png"}
                     alt={property.title}
+                    unoptimized
                   />
                 </div>
                 <div className="list-content py-0 p-0 mt-2 mt-xxl-0 ps-xxl-4">
@@ -92,25 +96,21 @@ const PropertyDataTable = ({
                 >
                   <span className="fas fa-pen fa" />
                 </button>
-                <button
-                  className="icon"
-                  style={{ border: "none" }}
-                  onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this property?')) {
-                      onDelete(property.id);
-                    }
-                  }}
-                  data-tooltip-id={`delete-${property.id}`}
-                  disabled={isDeleting}
-                >
-                  <span className="flaticon-bin" />
-                </button>
-
+              
                 <ReactTooltip
                   id={`edit-${property.id}`}
                   place="top"
                   content="Edit"
                 />
+                <button
+                    className="icon-btn"
+                    onClick={() => onDelete(property.id)} // Chỉ gọi onDelete, không confirm
+                    data-tooltip-id={`delete-${property.id}`}
+                    disabled={isDeleting}
+                    style={{ border: "none" }}
+                  >
+                    <i className="fas fa-trash-alt" />
+                </button>
                 <ReactTooltip
                   id={`delete-${property.id}`}
                   place="top"

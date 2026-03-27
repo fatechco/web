@@ -261,6 +261,7 @@ export const useDeleteProperty = () => {
     mutationFn: async (ids: number[]) => {
       return propertyService.delete(ids);
     },
+
     onSuccess: () => {
       success(t('property.deleted.success'));
       queryClient.invalidateQueries({ queryKey: ['properties'] });
@@ -382,17 +383,15 @@ export const useProperty = (uuid: string) => {
  * Hook lấy chi tiết property để edit (bao gồm translations)
  */
 export const usePropertyForEdit = (uuid: string) => {
-  const language = useSettingsStore((state) => state.selectedLanguage);
-  const currency = useSettingsStore((state) => state.selectedCurrency);
-  const country = useAddressStore((state) => state.country);
+  const language = useSettingsStore((state) => state.language);
+  const currency = useSettingsStore((state) => state.currency);
+  //const country = useAddressStore((state) => state.country);
   
   return useQuery<DefaultResponse<Property>>({
     queryKey: ['property-edit', uuid, language?.locale, currency?.id],
-    queryFn: () => propertyService.getByUuid(uuid, {
+    queryFn: () => propertyService.getPropertyForEdit(uuid, {
       lang: language?.locale,
-      currency_id: currency?.id,
-      region_id: country?.region_id,
-      with: 'translations,images,amenities',
+      currency_id: currency?.id
     }),
     enabled: !!uuid,
     staleTime: 0, // Don't cache for edit form

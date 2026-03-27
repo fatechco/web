@@ -11,6 +11,7 @@ interface PropertyDescriptionProps {
   updateFormData: (field: string, value: any) => void;
   onValidationChange?: (isValid: boolean) => void;
   onFocusField?: (fieldId: string) => void;
+  initialTranslations?: Record<string, { title: string; description: string }>;
 }
 
 export interface PropertyDescriptionRef {
@@ -22,7 +23,7 @@ const PropertyDescription = forwardRef<PropertyDescriptionRef, PropertyDescripti
     formData, 
     updateFormData, 
     onValidationChange,
-    onFocusField
+    initialTranslations, 
   }, ref) => {
     const { t } = useTranslation();
     const { categories } = useCategories();
@@ -50,16 +51,25 @@ const PropertyDescription = forwardRef<PropertyDescriptionRef, PropertyDescripti
     }, [languages]);
 
     // Initialize translations
+    // Initialize translations - ƯU TIÊN initialTranslations
     useEffect(() => {
-      if (activeLanguages.length > 0 && !formData.translations) {
+      // Nếu có initialTranslations từ API, sử dụng nó
+      if (initialTranslations && Object.keys(initialTranslations).length > 0) {
+        // Kiểm tra xem formData đã có translations chưa
+        if (!formData.translations || Object.keys(formData.translations).length === 0) {
+          updateFormData("translations", initialTranslations);
+        }
+      } 
+      // Nếu không có initialTranslations, tạo translations rỗng
+      else if (activeLanguages.length > 0 && !formData.translations) {
         const translations: Record<string, { title: string; description: string }> = {};
         activeLanguages.forEach((lang) => {
           translations[lang.locale] = { title: "", description: "" };
         });
         updateFormData("translations", translations);
       }
-    }, [activeLanguages, formData.translations, updateFormData]);
-
+    }, [activeLanguages, initialTranslations]);
+    
     const defaultLanguage = activeLanguages.find(l => l.default) || activeLanguages[0];
     const defaultLangCode = defaultLanguage?.locale;
 

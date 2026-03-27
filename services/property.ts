@@ -43,6 +43,10 @@ export const propertyService = {
   getMyProperties: (params?: ParamsType) =>
     fetcher<Paginate<Property>>(buildUrlQueryParams("v1/user/properties", params)),
 
+    // Get property for editing (authenticated user)
+  getPropertyForEdit: (uuid: string, params?: ParamsType) =>
+    fetcher<DefaultResponse<Property>>(buildUrlQueryParams(`v1/user/properties/${uuid}/edit`, params)),
+
   // Get property statistics for current user
   getMyStats: (params?: ParamsType) =>
     fetcher<any>(buildUrlQueryParams("v1/user/properties/stats", params)),

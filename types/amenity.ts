@@ -5,7 +5,6 @@ export interface Amenity {
   id: number;
   slug: string;
   name: string;
-  description?: string;
   icon?: string;
   order: number;
   is_active: boolean;

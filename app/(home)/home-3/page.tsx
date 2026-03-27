@@ -1,12 +1,10 @@
 import Blog from "@/components/real-estate/common/Blog";
 import CallToActions from "@/components/real-estate/common/CallToActions";
-import Footer from "@/components/real-estate/common/default-footer";
 import Explore from "@/components/real-estate/common/Explore";
 import Partner from "@/components/real-estate/common/Partner";
 import About from "@/components/real-estate/home/home-v1/About";
 import ApartmentType from "@/components/real-estate/home/home-v1/ApartmentType";
 import FeaturedListings from "@/components/real-estate/home/home-v1/FeatuerdListings";
-import Header from "@/components/real-estate/home/home-v1/Header";
 import Hero from "@/components/real-estate/home/home-v1/hero";
 import PopulerProperty from "@/components/real-estate/home/home-v1/PopulerProperty";
 import PropertiesByCities from "@/components/real-estate/home/home-v1/PropertiesByCities";
@@ -21,7 +19,7 @@ export const metadata = {
 const Home_V1 = () => {
   return (
     <>
-      <Header />
+    
       {/* Home Banner Style V1 */}
       <section className="home-banner-style1 p0">
         <div className="home-style1">
@@ -329,11 +327,7 @@ const Home_V1 = () => {
       <CallToActions />
       {/* Our CTA */}
 
-      {/* Start Our Footer */}
-      <section className="footer-style1 pt60 pb-0">
-        <Footer />
-      </section>
-      {/* End Our Footer */}
+      
     </>
   )
 };

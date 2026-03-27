@@ -3,7 +3,6 @@ import { deleteCookie, getCookie } from "cookies-next";
 import { ErrorResponse } from "@/types/global";
 import NetworkError from "@/utils/network-error";
 import { notFound, redirect } from "next/navigation";
-
 import { userActionOutsideOfComponent } from "@/global-store/user";
 
 interface CustomRequestInit extends RequestInit {
@@ -12,6 +11,14 @@ interface CustomRequestInit extends RequestInit {
 
 const fetcher = async <T>(input: string | string[], init?: CustomRequestInit): Promise<T> => {
   const url = `${BASE_URL}${Array.isArray(input) ? input[0] : input}`;
+  
+  console.log("🌐 [fetcher] Request:", {
+    url,
+    method: init?.method || "GET",
+    hasBody: !!init?.body,
+    isFormData: init?.body instanceof FormData,
+  });
+  
   const res = await fetch(url, {
     ...init,
     headers: {
@@ -19,13 +26,17 @@ const fetcher = async <T>(input: string | string[], init?: CustomRequestInit): P
       ...init?.headers,
     },
   });
-  console.log("url"+url);
+  
+  console.log("📥 [fetcher] Response:", {
+    url,
+    status: res.status,
+    ok: res.ok,
+  });
+  
   if (!res.ok) {
     const errorResponse = (await res.json()) as ErrorResponse;
-    // eslint-disable-next-line
     let errorMessage = errorResponse.message;
     if (errorResponse?.params) {
-      // eslint-disable-next-line prefer-destructuring
       errorMessage = Object.values(errorResponse.params)?.[0]?.[0];
     }
     if (res.status === 401) {
@@ -44,29 +55,94 @@ const fetcher = async <T>(input: string | string[], init?: CustomRequestInit): P
 export default fetcher;
 
 interface MutationRequestInit extends Omit<RequestInit, "body" | "method"> {
-  body: unknown;
+  body?: unknown;
 }
 
-fetcher.post = async <T>(input: string, init?: MutationRequestInit): Promise<T> =>
-  fetcher(input, {
+// POST method - hỗ trợ FormData
+fetcher.post = async <T>(input: string, init?: MutationRequestInit): Promise<T> => {
+  const isFormData = init?.body instanceof FormData;
+  
+  // Xử lý body: nếu là FormData thì giữ nguyên, không thì stringify
+  let body: BodyInit | null | undefined = undefined;
+  if (init?.body !== undefined) {
+    if (isFormData) {
+      body = init.body as FormData;
+    } else {
+      body = JSON.stringify(init.body);
+    }
+  }
+  
+  return fetcher(input, {
     ...init,
     method: "POST",
-    body: JSON.stringify(init?.body),
-    headers: { "Content-Type": "application/json" },
+    body,
+    headers: {
+      // Không set Content-Type khi là FormData (browser tự set với boundary)
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...init?.headers,
+    },
   });
+};
 
-fetcher.put = async <T>(input: string, init?: MutationRequestInit): Promise<T> =>
-  fetcher(input, {
+// PUT method - hỗ trợ FormData
+fetcher.put = async <T>(input: string, init?: MutationRequestInit): Promise<T> => {
+  const isFormData = init?.body instanceof FormData;
+  
+  let body: BodyInit | null | undefined = undefined;
+  if (init?.body !== undefined) {
+    if (isFormData) {
+      body = init.body as FormData;
+    } else {
+      body = JSON.stringify(init.body);
+    }
+  }
+  
+  return fetcher(input, {
     ...init,
     method: "PUT",
-    body: JSON.stringify(init?.body),
-    headers: { "Content-Type": "application/json" },
+    body,
+    headers: {
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...init?.headers,
+    },
   });
+};
 
-fetcher.delete = async <T>(input: string, init?: MutationRequestInit): Promise<T> =>
-  fetcher(input, {
+// DELETE method
+fetcher.delete = async <T>(input: string, init?: MutationRequestInit): Promise<T> => {
+  let body: BodyInit | null | undefined = undefined;
+  if (init?.body !== undefined) {
+    body = JSON.stringify(init.body);
+  }
+  
+  return fetcher(input, {
     ...init,
     method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(init?.body),
+    headers: { "Content-Type": "application/json", ...init?.headers },
+    body,
   });
+};
+
+// PATCH method - hỗ trợ FormData
+fetcher.patch = async <T>(input: string, init?: MutationRequestInit): Promise<T> => {
+  const isFormData = init?.body instanceof FormData;
+  
+  let body: BodyInit | null | undefined = undefined;
+  if (init?.body !== undefined) {
+    if (isFormData) {
+      body = init.body as FormData;
+    } else {
+      body = JSON.stringify(init.body);
+    }
+  }
+  
+  return fetcher(input, {
+    ...init,
+    method: "PATCH",
+    body,
+    headers: {
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...init?.headers,
+    },
+  });
+};

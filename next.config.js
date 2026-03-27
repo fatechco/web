@@ -8,16 +8,16 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "api.uzmart.org",
-        port: "",
-        pathname: "/storage/**",
+        protocol: 'http',
+        hostname: '127.0.0.1',
+        port: '8000',
+        pathname: '/storage/**',
       },
       {
-        protocol: "https",
-        hostname: "foodyman.s3.amazonaws.com",
-        port: "",
-        pathname: "/public/**",
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/storage/**',
       },
       {
         protocol: "https",
@@ -44,6 +44,7 @@ const nextConfig = {
         hostname: "graph.facebook.com",
       },
     ],
+
   },
 };
 

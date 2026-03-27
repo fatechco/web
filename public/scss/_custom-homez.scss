@@ -449,3 +449,194 @@ header.nav-homepage-style.light-header .ace-responsive-menu a {
         }
     }
 }
+
+// confirm dialog
+.confirm-modal {
+
+.confirm-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
+          z-index: 1000;
+          animation: fadeIn 0.2s ease;
+        }
+
+        .confirm-container {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 1001;
+          width: 90%;
+          max-width: 400px;
+          animation: slideUp 0.3s ease;
+        }
+
+        .confirm-content {
+          background: white;
+          border-radius: 20px;
+          box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+          overflow: hidden;
+        }
+
+        .confirm-header {
+          padding: 20px 20px 12px;
+          text-align: center;
+        }
+
+        .confirm-icon {
+          width: 48px;
+          height: 48px;
+          margin: 0 auto 12px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+        }
+
+        .confirm-icon-danger {
+          background: #fee2e2;
+          color: #dc2626;
+        }
+
+        .confirm-icon-warning {
+          background: #fef3c7;
+          color: #f59e0b;
+        }
+
+        .confirm-icon-info {
+          background: #dbeafe;
+          color: #3b82f6;
+        }
+
+        .confirm-icon-success {
+          background: #d1fae5;
+          color: #10b981;
+        }
+
+        .confirm-title {
+          font-size: 18px;
+          font-weight: 600;
+          color: #111827;
+          margin: 0;
+        }
+
+        .confirm-body {
+          padding: 0 20px 20px;
+        }
+
+        .confirm-message {
+          color: #4b5563;
+          font-size: 14px;
+          line-height: 1.5;
+          text-align: center;
+          margin: 0;
+        }
+
+        .confirm-warning {
+          background: #fef3c7;
+          border-radius: 10px;
+          padding: 10px 14px;
+          margin-top: 14px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #b45309;
+          font-size: 12px;
+        }
+
+        .confirm-warning i {
+          font-size: 14px;
+        }
+
+        .confirm-footer {
+          display: flex;
+          gap: 10px;
+          padding: 14px 20px 20px;
+          background: #f9fafb;
+          border-top: 1px solid #e5e7eb;
+        }
+
+        .confirm-btn {
+          flex: 1;
+          padding: 8px 14px;
+          border-radius: 10px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        }
+
+        .confirm-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .confirm-btn-secondary {
+          background: white;
+          color: #374151;
+          border: 1px solid #e5e7eb;
+        }
+
+        .confirm-btn-secondary:hover:not(:disabled) {
+          background: #f9fafb;
+          border-color: #d1d5db;
+        }
+
+        .confirm-btn-danger {
+          background: #dc2626;
+          color: white;
+        }
+
+        .confirm-btn-danger:hover:not(:disabled) {
+          background: #b91c1c;
+        }
+
+        .confirm-btn-primary {
+          background: #3b82f6;
+          color: white;
+        }
+
+        .confirm-btn-primary:hover:not(:disabled) {
+          background: #2563eb;
+        }
+
+        .confirm-btn-warning {
+          background: #f59e0b;
+          color: white;
+        }
+
+        .confirm-btn-warning:hover:not(:disabled) {
+          background: #d97706;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -40%);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+          }
+        }
+}

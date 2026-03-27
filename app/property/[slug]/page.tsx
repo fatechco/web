@@ -1,6 +1,4 @@
 // "use client";
-import DefaultHeader from "@/components/real-estate/common/DefaultHeader";
-import Footer from "@/components/real-estate/common/default-footer";
 import MobileMenu from "@/components/real-estate/common/mobile-menu";
 import EnergyClass from "@/components/real-estate/property/property-single-style/common/EnergyClass";
 import FloorPlans from "@/components/real-estate/property/property-single-style/common/FloorPlans";
@@ -33,10 +31,6 @@ const SingleV2 = async props => {
   const params = await props.params;
   return (
     <>
-      {/* Main Header Nav */}
-      <DefaultHeader />
-      {/* End Main Header Nav */}
-
       {/* Mobile Nav  */}
       <MobileMenu />
       {/* End Mobile Nav  */}
@@ -260,11 +254,6 @@ const SingleV2 = async props => {
         </div>
       </section>
 
-      {/* Start Our Footer */}
-      <section className="footer-style1 pt60 pb-0">
-        <Footer />
-      </section>
-      {/* End Our Footer */}
     </>
   );
 };

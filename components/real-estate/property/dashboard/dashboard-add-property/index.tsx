@@ -9,10 +9,13 @@ import Amenities from "./Amenities";
 import { useCreateProperty } from "@/hook/use-properties";
 import { useCategories } from "@/hook/use-categories";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 const AddPropertyTabContent = () => {
   const { t } = useTranslation();
-  const { categories } = useCategories(); // Lấy categories từ hook
+  const router = useRouter();
+  const { categories } = useCategories();
   const [activeStep, setActiveStep] = useState(0);
   const descriptionRef = useRef<any>(null);
   const mediaRef = useRef<any>(null);
@@ -28,8 +31,10 @@ const AddPropertyTabContent = () => {
     amenities: false,
   });
   
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [formData, setFormData] = useState({
-    translations: {},
+    translations: {} as Record<string, { title: string; description: string }>,
     category_id: null as number | null,
     type: "sale" as "sale" | "rent",
     status: "pending" as "pending" | "available" | "sold" | "rented",
@@ -93,7 +98,6 @@ const AddPropertyTabContent = () => {
     if (formData.category_id && categories.length > 0) {
       const selectedCategory = categories.find(cat => cat.id === formData.category_id);
       if (selectedCategory?.slug === 'land') {
-        // Reset các field không cần thiết cho land
         updateFormData("bedrooms", "");
         updateFormData("bathrooms", "");
         updateFormData("floors", "");
@@ -188,44 +192,156 @@ const AddPropertyTabContent = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    const allValid = Object.values(stepValid).every(v => v === true);
-    if (!allValid) {
-      const firstInvalidIndex = steps.findIndex(step => !stepValid[step.id as keyof typeof stepValid]);
-      if (firstInvalidIndex !== -1) {
-        setActiveStep(firstInvalidIndex);
-        setTimeout(() => {
-          const invalidStep = steps[firstInvalidIndex];
-          if (invalidStep.id === "description" && invalidStep.ref.current?.focusFirstError) {
-            invalidStep.ref.current.focusFirstError();
-          }
-        }, 100);
-      }
-      return;
-    }
-    
+  /**
+   * Build FormData from form state
+   */
+  const buildFormData = (): FormData => {
     const formDataToSend = new FormData();
     
-    Object.entries(formData.translations).forEach(([locale, data]: [string, any]) => {
+    // 1. Add translations
+    Object.entries(formData.translations).forEach(([locale, data]) => {
       formDataToSend.append(`translations[${locale}][title]`, data.title);
       formDataToSend.append(`translations[${locale}][description]`, data.description);
     });
     
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key === "images" && Array.isArray(value)) {
-        value.forEach((image: File) => {
-          formDataToSend.append("images[]", image);
-        });
-      } else if (key === "amenities" && Array.isArray(value)) {
-        value.forEach((amenityId: number) => {
-          formDataToSend.append("amenities[]", amenityId.toString());
-        });
-      } else if (key !== "translations" && value !== null && value !== "" && value !== undefined) {
-        formDataToSend.append(key, value.toString());
+    // 2. Add basic info
+    if (formData.category_id) {
+      formDataToSend.append("category_id", formData.category_id.toString());
+    }
+    formDataToSend.append("type", formData.type);
+    formDataToSend.append("status", formData.status);
+    formDataToSend.append("price", formData.price);
+    formDataToSend.append("is_negotiable", formData.is_negotiable ? "1" : "0");
+    
+    // 3. Add details
+    if (formData.area) formDataToSend.append("area", formData.area);
+    if (formData.land_area) formDataToSend.append("land_area", formData.land_area);
+    if (formData.built_area) formDataToSend.append("built_area", formData.built_area);
+    if (formData.bedrooms) formDataToSend.append("bedrooms", formData.bedrooms);
+    if (formData.bathrooms) formDataToSend.append("bathrooms", formData.bathrooms);
+    if (formData.floors) formDataToSend.append("floors", formData.floors);
+    if (formData.garages) formDataToSend.append("garages", formData.garages);
+    if (formData.year_built) formDataToSend.append("year_built", formData.year_built);
+    if (formData.furnishing) formDataToSend.append("furnishing", formData.furnishing);
+    if (formData.legal_status) formDataToSend.append("legal_status", formData.legal_status);
+    if (formData.ownership_type) formDataToSend.append("ownership_type", formData.ownership_type);
+    
+    // 4. Add location
+    if (formData.country_id) formDataToSend.append("country_id", formData.country_id.toString());
+    if (formData.province_id) formDataToSend.append("province_id", formData.province_id.toString());
+    if (formData.district_id) formDataToSend.append("district_id", formData.district_id.toString());
+    if (formData.ward_id) formDataToSend.append("ward_id", formData.ward_id.toString());
+    if (formData.street) formDataToSend.append("street", formData.street);
+    if (formData.street_number) formDataToSend.append("street_number", formData.street_number);
+    if (formData.building_name) formDataToSend.append("building_name", formData.building_name);
+    if (formData.full_address) formDataToSend.append("full_address", formData.full_address);
+    if (formData.latitude) formDataToSend.append("latitude", formData.latitude);
+    if (formData.longitude) formDataToSend.append("longitude", formData.longitude);
+    
+    // 5. Add media
+    formData.images.forEach((image) => {
+      formDataToSend.append("images[]", image);
+    });
+    if (formData.video_url) formDataToSend.append("video_url", formData.video_url);
+    if (formData.virtual_tour_url) formDataToSend.append("virtual_tour_url", formData.virtual_tour_url);
+    
+    // 6. Add amenities
+    formData.amenities.forEach((amenityId) => {
+      formDataToSend.append("amenities[]", amenityId.toString());
+    });
+    
+    return formDataToSend;
+  };
+
+  /**
+   * Validate all steps before submit
+   */
+  const validateAllSteps = (): boolean => {
+    // Trigger validation for all steps
+    const stepsToValidate = ["description", "media", "location", "details"];
+    let allValid = true;
+    
+    stepsToValidate.forEach((stepId) => {
+      const step = steps.find(s => s.id === stepId);
+      if (step?.ref.current?.validate) {
+        const isValid = step.ref.current.validate();
+        updateStepValidation(stepId, isValid);
+        if (!isValid) allValid = false;
       }
     });
     
-    createProperty(formDataToSend);
+    // Amenities is optional, always valid
+    updateStepValidation("amenities", true);
+    
+    return allValid;
+  };
+
+  /**
+   * Handle form submission
+   */
+  const handleSubmit = async () => {
+    // Prevent double submission
+    if (isSubmitting || isCreating) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Validate all steps
+      const isValid = validateAllSteps();
+      
+      if (!isValid) {
+        // Find first invalid step and navigate to it
+        const firstInvalidStep = steps.find(step => !stepValid[step.id as keyof typeof stepValid]);
+        if (firstInvalidStep) {
+          const stepIndex = steps.findIndex(s => s.id === firstInvalidStep.id);
+          setActiveStep(stepIndex);
+          // Focus on error after a short delay
+          setTimeout(() => {
+            if (firstInvalidStep.id === "description" && descriptionRef.current?.focusFirstError) {
+              descriptionRef.current.focusFirstError();
+            } else if (firstInvalidStep.id === "media" && mediaRef.current?.focusFirstError) {
+              mediaRef.current.focusFirstError();
+            } else if (firstInvalidStep.id === "location" && locationRef.current?.focusFirstError) {
+              locationRef.current.focusFirstError();
+            } else if (firstInvalidStep.id === "details" && detailsRef.current?.focusFirstError) {
+              detailsRef.current.focusFirstError();
+            }
+          }, 100);
+        }
+        toast.error(t("validation.fill_all_required_fields"));
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Build form data
+      const formDataToSend = buildFormData();
+      
+      // Log form data for debugging
+      console.log("Submitting property:", Object.fromEntries(formDataToSend));
+      
+      // Submit to API
+      createProperty(formDataToSend, {
+        onSuccess: (response) => {
+          toast.success(t("property.created.success"));
+          // Redirect to my properties after 2 seconds
+          setTimeout(() => {
+            router.push("/dashboard/my-properties");
+          }, 2000);
+        },
+        onError: (error: any) => {
+          console.error("Submit error:", error);
+          const errorMessage = error?.response?.data?.message || error?.message || t("property.created.error");
+          toast.error(errorMessage);
+        },
+        onSettled: () => {
+          setIsSubmitting(false);
+        },
+      });
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error(t("property.created.error"));
+      setIsSubmitting(false);
+    }
   };
 
   const currentStep = steps[activeStep];
@@ -286,6 +402,7 @@ const AddPropertyTabContent = () => {
           <button
             className="ud-btn btn-outline-secondary"
             onClick={handlePrevious}
+            disabled={isSubmitting || isCreating}
           >
             <i className="fas fa-arrow-left me-2" />
             {t("previous")}
@@ -296,6 +413,7 @@ const AddPropertyTabContent = () => {
           <button
             className={`ud-btn btn-thm ${activeStep === 0 ? "ms-auto" : ""}`}
             onClick={handleNext}
+            disabled={isSubmitting || isCreating}
           >
             {t("next")}
             <i className="fas fa-arrow-right ms-2" />
@@ -304,9 +422,9 @@ const AddPropertyTabContent = () => {
           <button
             className="ud-btn btn-thm ms-auto"
             onClick={handleSubmit}
-            disabled={isCreating}
+            disabled={isSubmitting || isCreating}
           >
-            {isCreating ? (
+            {(isSubmitting || isCreating) ? (
               <>
                 <span className="spinner-border spinner-border-sm me-2" />
                 {t("publishing")}

@@ -1,18 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { useProperties } from "@/hook/use-properties";
+import { useDeleteProperty, useProperties } from "@/hook/use-properties";
 import { TableSkeleton } from "@/components/skeleton/table-skeleton";
 import FilterHeader from "@/components/real-estate/property/dashboard/dashboard-my-properties/FilterHeader";
 import PropertyDataTable from "@/components/real-estate/property/dashboard/dashboard-my-properties/PropertyDataTable";
 import Pagination from "@/components/real-estate/property/Pagination";
+import ConfirmDialog from "@/components/real-estate/common/ConfirmDialog";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
-// /import { PlusIcon } from "@/assets/icons/plus";
+import { useRouter } from "next/navigation";
+// import { PlusIcon } from "@/assets/icons/plus";
 
 const DashboardMyProperties = () => {
   const { t } = useTranslation();
+  const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    id?: number;
+    isBulk?: boolean;
+  }>({ isOpen: false });
 
   // Sử dụng useProperties với type='user' để lấy properties của user hiện tại
   const {
@@ -20,12 +28,10 @@ const DashboardMyProperties = () => {
     paginateInfo,
     isLoading,
     isFetching,
-    isDeleting,
     handleSearch,
     handleSort,
     handlePageChange,
     handlePageSizeChange,
-    deleteProperties,
     refresh,
     filters,
     total,
@@ -39,6 +45,7 @@ const DashboardMyProperties = () => {
     }
   });
 
+  const { deleteProperty, isDeleting } = useDeleteProperty();
   // Handle select all
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -57,103 +64,165 @@ const DashboardMyProperties = () => {
     }
   };
 
-  // Handle bulk delete
-  const handleBulkDelete = () => {
+  // Handle single delete click
+  const handleDeleteClick = (id: number) => {
+    setDeleteConfirm({
+      isOpen: true,
+      id: id,
+      isBulk: false,
+    });
+  };
+
+  // Handle bulk delete click
+  const handleBulkDeleteClick = () => {
     if (selectedIds.length === 0) return;
-    
-    if (window.confirm(t('confirm.delete.selected', { count: selectedIds.length }))) {
-      deleteProperties(selectedIds, {
+    setDeleteConfirm({
+      isOpen: true,
+      isBulk: true,
+    });
+  };
+
+  // Confirm delete
+  const confirmDelete = () => {
+    if (deleteConfirm.isBulk) {
+      deleteProperty(selectedIds, {
         onSuccess: () => {
           setSelectedIds([]);
+          setDeleteConfirm({ isOpen: false });
+        },
+        onError: () => {
+          setDeleteConfirm({ isOpen: false });
+        }
+      });
+    } else if (deleteConfirm.id) {
+      deleteProperty([deleteConfirm.id], {
+        onSuccess: () => {
+          setDeleteConfirm({ isOpen: false });
+        },
+        onError: () => {
+          setDeleteConfirm({ isOpen: false });
         }
       });
     }
   };
 
+  // Cancel delete
+  const cancelDelete = () => {
+    setDeleteConfirm({ isOpen: false });
+  };
+
+  // Handle edit
+  const handleEdit = (property: any) => {
+    router.push(`/dashboard/edit-property/${property.uuid}`);
+  };
+
   // Handle export
   const handleExport = () => {
-    // Implement export logic
     console.log('Export properties');
   };
 
-  return (
-   <>
-      
-        {/* Quick Stats Row */}
-<div className="row mt-5 g-4">
-  <div className="col-md-3 col-sm-6">
-    <div className="stat-card stat-card-primary">
-      <div className="stat-card-inner">
-        <div className="stat-icon-wrapper">
-          <span className="stat-icon flaticon-home" />
-        </div>
-        <div className="stat-content">
-          <h3 className="stat-number">{total || 0}</h3>
-          <p className="stat-label">{t('total.properties')}</p>
-        </div>
-      </div>
-      <div className="stat-trend stat-trend-up">
-        <i className="fas fa-arrow-up" />
-        <span>+12%</span>
-      </div>
-    </div>
-  </div>
-  
-  <div className="col-md-3 col-sm-6">
-    <div className="stat-card stat-card-success">
-      <div className="stat-card-inner">
-        <div className="stat-icon-wrapper">
-          <span className="stat-icon flaticon-checkmark" />
-        </div>
-        <div className="stat-content">
-          <h3 className="stat-number">{properties.filter(p => p.status === 'published' || p.status === 'available').length}</h3>
-          <p className="stat-label">{t('published')}</p>
-        </div>
-      </div>
-      <div className="stat-trend stat-trend-up">
-        <i className="fas fa-arrow-up" />
-        <span>+5%</span>
-      </div>
-    </div>
-  </div>
-  
-  <div className="col-md-3 col-sm-6">
-    <div className="stat-card stat-card-warning">
-      <div className="stat-card-inner">
-        <div className="stat-icon-wrapper">
-          <span className="stat-icon flaticon-clock" />
-        </div>
-        <div className="stat-content">
-          <h3 className="stat-number">{properties.filter(p => p.status === 'pending').length}</h3>
-          <p className="stat-label">{t('pending')}</p>
-        </div>
-      </div>
-      <div className="stat-trend stat-trend-down">
-        <i className="fas fa-arrow-down" />
-        <span>-3%</span>
-      </div>
-    </div>
-  </div>
-  
-  <div className="col-md-3 col-sm-6">
-    <div className="stat-card stat-card-info">
-      <div className="stat-card-inner">
-        <div className="stat-icon-wrapper">
-          <span className="stat-icon flaticon-view" />
-        </div>
-        <div className="stat-content">
-          <h3 className="stat-number">{properties.reduce((sum, p) => sum + (p.views || 0), 0).toLocaleString()}</h3>
-          <p className="stat-label">{t('total.views')}</p>
-        </div>
-      </div>
-      <div className="stat-trend stat-trend-up">
-        <i className="fas fa-arrow-up" />
-        <span>+23%</span>
-      </div>
-    </div>
-  </div>
+  // Get delete message based on selection
+  const getDeleteMessage = () => {
+    if (deleteConfirm.isBulk) {
+      return t('confirm.delete.selected.message', { count: selectedIds.length });
+    }
+    const property = properties.find(p => p.id === deleteConfirm.id);
+    const title = property?.title || '';
+    return t('confirm.delete.single.message', { title });
+  };
 
+  return (
+    <>
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title={deleteConfirm.isBulk ? t('confirm.delete.bulk.title') : t('confirm.delete.title')}
+        message={getDeleteMessage()}
+        warning={t('confirm.delete.warning')}
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
+        confirmVariant="danger"
+        icon="delete"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        isConfirming={isDeleting}
+      />
+
+      {/* Quick Stats Row */}
+      <div className="row mt-5 g-4">
+        <div className="col-md-3 col-sm-6">
+          <div className="stat-card stat-card-primary">
+            <div className="stat-card-inner">
+              <div className="stat-icon-wrapper">
+                <span className="stat-icon flaticon-home" />
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-number">{total || 0}</h3>
+                <p className="stat-label">{t('total.properties')}</p>
+              </div>
+            </div>
+            <div className="stat-trend stat-trend-up">
+              <i className="fas fa-arrow-up" />
+              <span>+12%</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="col-md-3 col-sm-6">
+          <div className="stat-card stat-card-success">
+            <div className="stat-card-inner">
+              <div className="stat-icon-wrapper">
+                <span className="stat-icon flaticon-checkmark" />
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-number">{properties.filter(p => p.status === 'published' || p.status === 'available').length}</h3>
+                <p className="stat-label">{t('published')}</p>
+              </div>
+            </div>
+            <div className="stat-trend stat-trend-up">
+              <i className="fas fa-arrow-up" />
+              <span>+5%</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="col-md-3 col-sm-6">
+          <div className="stat-card stat-card-warning">
+            <div className="stat-card-inner">
+              <div className="stat-icon-wrapper">
+                <span className="stat-icon flaticon-clock" />
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-number">{properties.filter(p => p.status === 'pending').length}</h3>
+                <p className="stat-label">{t('pending')}</p>
+              </div>
+            </div>
+            <div className="stat-trend stat-trend-down">
+              <i className="fas fa-arrow-down" />
+              <span>-3%</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="col-md-3 col-sm-6">
+          <div className="stat-card stat-card-info">
+            <div className="stat-card-inner">
+              <div className="stat-icon-wrapper">
+                <span className="stat-icon flaticon-view" />
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-number">{properties.reduce((sum, p) => sum + (p.views || 0), 0).toLocaleString()}</h3>
+                <p className="stat-label">{t('total.views')}</p>
+              </div>
+            </div>
+            <div className="stat-trend stat-trend-up">
+              <i className="fas fa-arrow-up" />
+              <span>+23%</span>
+            </div>
+          </div>
+        </div>
       </div>
+
       <div className="row align-items-center mt30 pb40">
         <div className="col-xxl-3">
           <div className="dashboard_title_area">
@@ -183,7 +252,7 @@ const DashboardMyProperties = () => {
               </span>
               <div className="d-flex gap-2">
                 <button
-                  onClick={handleBulkDelete}
+                  onClick={handleBulkDeleteClick}
                   className="ud-btn btn-outline-danger"
                   disabled={isDeleting}
                 >
@@ -204,12 +273,10 @@ const DashboardMyProperties = () => {
       {/* Add New Property Button for Mobile */}
       <div className="d-block d-xxl-none mb20">
         <Link href="/dashboard/add-property" className="ud-btn btn-thm w-100">
-          {/* <PlusIcon className="me-2" /> */}
           {t('add.new.property')}
         </Link>
       </div>
 
-    
       <div className="row">
         <div className="col-xl-12">
           <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
@@ -258,7 +325,6 @@ const DashboardMyProperties = () => {
                         {t('start.adding.your.first.property')}
                       </p>
                       <Link href="/dashboard/add-property" className="ud-btn btn-thm">
-                       {/*  <PlusIcon className="me-2" /> */}
                         {t('add.new.property')}
                       </Link>
                     </div>
@@ -266,15 +332,8 @@ const DashboardMyProperties = () => {
                     <div className="packages_table table-responsive">
                       <PropertyDataTable 
                         properties={properties}
-                        onDelete={(id) => {
-                          if (window.confirm(t('confirm.delete'))) {
-                            deleteProperties([id]);
-                          }
-                        }}
-                        onEdit={(property) => {
-                          // Navigate to edit page
-                          window.location.href = `/dashboard/edit-property/${property.id}`;
-                        }}
+                        onDelete={handleDeleteClick}
+                        onEdit={handleEdit}
                         isDeleting={isDeleting}
                         selectedIds={selectedIds}
                         onSelect={handleSelect}
@@ -305,7 +364,7 @@ const DashboardMyProperties = () => {
         </div>
       </div>
 
-        <style jsx>{`
+      <style jsx>{`
         .stat-card {
           position: relative;
           background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
@@ -428,7 +487,6 @@ const DashboardMyProperties = () => {
           font-size: 10px;
         }
 
-        /* Animation cho số đếm */
         @keyframes countUp {
           from {
             opacity: 0;
@@ -444,7 +502,6 @@ const DashboardMyProperties = () => {
           animation: countUp 0.5s ease-out;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
           .stat-card {
             padding: 1rem;
@@ -473,8 +530,7 @@ const DashboardMyProperties = () => {
           }
         }
       `}</style>
-
-   </>  
+    </>
   );
 };
 

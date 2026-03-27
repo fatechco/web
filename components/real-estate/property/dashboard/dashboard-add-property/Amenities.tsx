@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAmenities } from "@/hook/use-amenity";
 
 interface AmenitiesProps {
@@ -12,9 +12,12 @@ const Amenities = ({ formData, updateFormData }: AmenitiesProps) => {
   const { amenities, isLoading } = useAmenities();
   const [selectedAmenities, setSelectedAmenities] = useState<number[]>(formData.amenities || []);
 
+  // Chỉ cập nhật khi selectedAmenities thay đổi do user click
   useEffect(() => {
     updateFormData("amenities", selectedAmenities);
-  }, [selectedAmenities]);
+  }, [selectedAmenities]); // ✅ chỉ phụ thuộc vào selectedAmenities
+
+  // Không cần useEffect để init từ formData vì đã init trong useState
 
   const toggleAmenity = (amenityId: number) => {
     setSelectedAmenities(prev =>
@@ -28,9 +31,12 @@ const Amenities = ({ formData, updateFormData }: AmenitiesProps) => {
     return <div className="text-center py-5">Loading amenities...</div>;
   }
 
-  // Split amenities into 3 columns
+  if (!amenities || amenities.length === 0) {
+    return <div className="text-center py-5 text-gray-500">No amenities found</div>;
+  }
+
   const columns = [[], [], []];
-  amenities?.forEach((amenity: any, index: number) => {
+  amenities.forEach((amenity: any, index: number) => {
     columns[index % 3].push(amenity);
   });
 
@@ -39,17 +45,20 @@ const Amenities = ({ formData, updateFormData }: AmenitiesProps) => {
       {columns.map((column, colIndex) => (
         <div key={colIndex} className="col-sm-6 col-lg-4">
           <div className="checkbox-style1">
-            {column.map((amenity: any) => (
-              <label key={amenity.id} className="custom_checkbox">
-                {amenity.name}
-                <input
-                  type="checkbox"
-                  checked={selectedAmenities.includes(amenity.id)}
-                  onChange={() => toggleAmenity(amenity.id)}
-                />
-                <span className="checkmark" />
-              </label>
-            ))}
+            {column.map((amenity: any) => {
+              const isChecked = selectedAmenities.includes(amenity.id);
+              return (
+                <label key={amenity.id} className="custom_checkbox">
+                  {amenity.name}
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleAmenity(amenity.id)}
+                  />
+                  <span className="checkmark" />
+                </label>
+              );
+            })}
           </div>
         </div>
       ))}
