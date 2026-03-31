@@ -19,6 +19,9 @@ export const propertyService = {
   getByUuid: (uuid: string, params?: ParamsType) =>
     fetcher<DefaultResponse<Property>>(buildUrlQueryParams(`v1/rest/properties/${uuid}`, params)),
 
+   getBySlug: (slug: string, params?: ParamsType) =>
+    fetcher<DefaultResponse<Property>>(buildUrlQueryParams(`v1/rest/properties/${slug}`, params)),
+
   // Search properties with advanced filters
   search: (params?: ParamsType) =>
     fetcher<Paginate<Property>>(buildUrlQueryParams("v1/rest/properties/search", params)),

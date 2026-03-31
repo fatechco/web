@@ -362,18 +362,37 @@ export const useSimilarProperties = (propertyId: number, filters?: PropertyFilte
 };
 
 // ============== SINGLE PROPERTY HOOK ==============
+// hook/use-properties.ts
 
-export const useProperty = (uuid: string) => {
-  const language = useSettingsStore((state) => state.selectedLanguage);
-  const currency = useSettingsStore((state) => state.selectedCurrency);
-  const country = useAddressStore((state) => state.country);
+/**
+ * Hook lấy chi tiết property theo slug (SEO friendly)
+ */
+export const useProperty = (slug: string) => {
+  const language = useSettingsStore((state) => state.language);
+  const currency = useSettingsStore((state) => state.currency);
   
   return useQuery<DefaultResponse<Property>>({
-    queryKey: ['property', uuid, language?.locale, currency?.id, country?.region_id],
+    queryKey: ['property', slug, language?.locale, currency?.id],
+    queryFn: () => propertyService.getBySlug(slug, {
+      lang: language?.locale,
+      currency_id: currency?.id,
+    }),
+    enabled: !!slug,
+  });
+};
+
+/**
+ * Hook lấy chi tiết property theo UUID (fallback)
+ */
+export const usePropertyByUuid = (uuid: string) => {
+  const language = useSettingsStore((state) => state.language);
+  const currency = useSettingsStore((state) => state.currency);
+  
+  return useQuery<DefaultResponse<Property>>({
+    queryKey: ['property', uuid, language?.locale, currency?.id],
     queryFn: () => propertyService.getByUuid(uuid, {
       lang: language?.locale,
       currency_id: currency?.id,
-      region_id: country?.region_id,
     }),
     enabled: !!uuid,
   });

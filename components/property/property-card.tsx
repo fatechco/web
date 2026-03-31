@@ -1,12 +1,10 @@
-// components/property/PropertyCard.tsx
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Property } from "@/types/property";
+import type { Property } from "@/types/property";
 import { useLike } from "@/hook/use-like";
-
 
 interface PropertyCardProps {
   property: Property;
@@ -16,10 +14,21 @@ interface PropertyCardProps {
 const PropertyCard = ({ property, colstyle = false }: PropertyCardProps) => {
   const { isLiked, handleLikeDisLike } = useLike("property", property.id);
   
-  // Xử lý images (có thể là JSON string)
-  const images = property.images ? JSON.parse(property.images as string) : [];
-  const mainImage = images[0] || '/images/property-placeholder.jpg';
+  // Lấy ảnh chính từ property
+  const mainImage = property.primary_image || property.images?.[0]?.url || '/images/property-placeholder.jpg';
   
+  // Format giá
+  const formatPrice = (price: number | string) => {
+    if (!price) return 'N/A';
+    const priceNum = typeof price === 'string' ? parseFloat(price) : price;
+    if (isNaN(priceNum)) return 'N/A';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(priceNum);
+  };
 
   // Xác định loại BĐS (For Rent / For Sale)
   const isForRent = property.type === 'rent';
@@ -31,12 +40,17 @@ const PropertyCard = ({ property, colstyle = false }: PropertyCardProps) => {
         {/* Image Section */}
         <div className="list-thumb">
           <Image
+          unoptimized
             width={382}
             height={248}
             className="w-100 cover"
             style={{ height: colstyle ? '248px' : '354px' }}
             src={mainImage}
-            alt={property.name}
+            alt={property.title || property.name || 'Property'}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = '/images/property-placeholder.jpg';
+            }}
           />
           
           {/* Featured Tag */}
@@ -51,44 +65,49 @@ const PropertyCard = ({ property, colstyle = false }: PropertyCardProps) => {
 
           {/* Price Tag */}
           <div className="list-price">
-            {property.price}
+            {property.price_formatted || formatPrice(property.price)}
             {isForRent && property.period && ` / ${property.period}`}
           </div>
         </div>
 
         {/* Content Section */}
         <div className="list-content">
-          {/* Agent Avatar (có thể thay bằng logo nếu có) */}
+          {/* Agent Avatar */}
           <div className="list-agent topFive">
             <Image
+            unoptimized
               width={114}
               height={114}
               className="rounded-circle w-full h-full cover"
-              src="/images/team/agent-single-1.png"
-              alt="agent"
+              src={property.user?.avatar || "/images/team/agent-single-1.png"}
+              alt={property.user?.name || "agent"}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/images/team/agent-single-1.png';
+              }}
             />
           </div>
 
           {/* Title */}
           <h6 className="list-title">
-            <Link href={`/property/${property.slug || property.id}`}>
-              {property.name}
+            <Link href={`/property/${property.slug || property.uuid || property.id}`}>
+              {property.title || property.name}
             </Link>
           </h6>
 
           {/* Location */}
-          <p className="list-text">{property.location || ''}</p>
+          <p className="list-text">{property.full_address || property.address || ''}</p>
 
           {/* Property Details (Bed, Bath, Sqft) */}
           <div className="list-meta d-flex align-items-center">
             <a href="#">
-              <span className="flaticon-bed" /> {property.number_bedroom || 0} bed
+              <span className="flaticon-bed" /> {property.bedrooms || 0} bed
             </a>
             <a href="#">
-              <span className="flaticon-shower" /> {property.number_bathroom || 0} bath
+              <span className="flaticon-shower" /> {property.bathrooms || 0} bath
             </a>
             <a href="#">
-              <span className="flaticon-expand" /> {property.square || 0} sqft
+              <span className="flaticon-expand" /> {property.area || 0} sqft
             </a>
           </div>
 
@@ -97,7 +116,7 @@ const PropertyCard = ({ property, colstyle = false }: PropertyCardProps) => {
           {/* Footer Actions */}
           <div className="list-meta2 d-flex justify-content-between align-items-center">
             <span className="for-what">
-              {isForRent ? 'For Rent' : 'For Sale'}
+              {property.type_label || (isForRent ? 'For Rent' : 'For Sale')}
             </span>
             <div className="icons d-flex align-items-center">
               <a href="#" onClick={(e) => e.preventDefault()}>

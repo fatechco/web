@@ -1,4 +1,7 @@
-// "use client";
+// app/property/[slug]/page.tsx
+"use client";
+
+import { useProperty } from "@/hook/use-properties";
 import MobileMenu from "@/components/real-estate/common/mobile-menu";
 import EnergyClass from "@/components/real-estate/property/property-single-style/common/EnergyClass";
 import FloorPlans from "@/components/real-estate/property/property-single-style/common/FloorPlans";
@@ -23,80 +26,97 @@ import WalkScore from "@/components/real-estate/property/property-single-style/c
 import PropertyHeader from "@/components/real-estate/property/property-single-style/single-v2/PropertyHeader";
 import ScheduleForm from "@/components/real-estate/property/property-single-style/single-v2/ScheduleForm";
 
-export const metadata = {
-  title: "Property Single V2 || Homez - Real Estate NextJS Template",
-};
+import { notFound } from "next/navigation";
+import { PropertyDetailSkeleton } from "@/components/skeleton/property-detail-skeleton";
+import { use } from "react";
 
-const SingleV2 = async props => {
-  const params = await props.params;
+
+interface SingleV2Props {
+  params: Promise<{
+    slug: string;
+  }>;
+}
+
+export default function SingleV2({ params }: SingleV2Props) {
+  const { slug } = use(params);
+  const { data, isLoading, error } = useProperty(slug);
+
+  if (isLoading) {
+    return <PropertyDetailSkeleton />;
+  }
+
+  if (error || !data?.data) {
+    notFound();
+  }
+
+  const property = data.data;
+
   return (
     <>
-      {/* Mobile Nav  */}
+      {/* Mobile Nav */}
       <MobileMenu />
-      {/* End Mobile Nav  */}
+      {/* End Mobile Nav */}
 
       {/* Property All Single V1 */}
       <section className="pt60 pb0 bgc-white">
         <div className="container">
           <div className="row">
-            <PropertyHeader id={params.id} />
+            <PropertyHeader property={property} />
           </div>
-          {/* End .row */}
 
           <div className="row mb30 mt30">
-            <PropertyGallery id={params.id} />
+            <PropertyGallery images={property.images || []} />
           </div>
-          {/* End .row */}
 
           <div className="row mt30">
-            <OverView id={params.id} />
+            <OverView property={property} />
           </div>
-          {/* End .row */}
         </div>
-        {/* End .container */}
       </section>
-      {/* End Property All Single V1  */}
 
       <section className="pt60 pb90 bgc-f7">
         <div className="container">
           <div className="row wrap">
             <div className="col-lg-8">
+              {/* Property Description */}
               <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                 <h4 className="title fz17 mb30">Property Description</h4>
-                <ProperytyDescriptions />
-                {/* End property description */}
+                <ProperytyDescriptions property={property} />
+              </div>
 
-                <h4 className="title fz17 mb30 mt50">Property Details</h4>
+              {/* Property Details */}
+              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
+                <h4 className="title fz17 mb30 mt30">Property Details</h4>
                 <div className="row">
-                  <PropertyDetails />
+                  <PropertyDetails property={property} />
                 </div>
               </div>
-              {/* End .ps-widget */}
 
+              {/* Address */}
               <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                 <h4 className="title fz17 mb30 mt30">Address</h4>
                 <div className="row">
-                  <PropertyAddress />
+                  {/*<PropertyAddress address={property.full_address} /> */}
                 </div>
               </div>
-              {/* End .ps-widget */}
 
+              {/* Features & Amenities */}
               <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                 <h4 className="title fz17 mb30">Features &amp; Amenities</h4>
                 <div className="row">
-                  <PropertyFeaturesAminites />
+                  <PropertyFeaturesAminites amenities={property.amenities} />
                 </div>
               </div>
-              {/* End .ps-widget */}
 
+              {/* Energy Class */}
               <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                 <h4 className="title fz17 mb30">Energy Class</h4>
                 <div className="row">
                   <EnergyClass />
                 </div>
               </div>
-              {/* End .ps-widget */}
 
+              {/* Floor Plans */}
               <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                 <h4 className="title fz17 mb30">Floor Plans</h4>
                 <div className="row">
@@ -107,155 +127,49 @@ const SingleV2 = async props => {
                   </div>
                 </div>
               </div>
-              {/* End .ps-widget */}
 
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 ">
-                <h4 className="title fz17 mb30">Video</h4>
-                <div className="row">
-                  <PropertyVideo />
-                </div>
-              </div>
-              {/* End .ps-widget */}
-
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                <h4 className="title fz17 mb30">360° Virtual Tour</h4>
-                <div className="row">
-                  <VirtualTour360 />
-                </div>
-              </div>
-              {/* End .ps-widget */}
-
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                <h4 className="title fz17 mb30">What&apos;s Nearby?</h4>
-                <div className="row">
-                  <PropertyNearby />
-                </div>
-              </div>
-              {/* End .ps-widget */}
-
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                <h4 className="title fz17 mb30">Walkscore</h4>
-                <div className="row">
-                  <div className="col-md-12">
-                    <h4 className="fw400 mb20">
-                      10425 Tabor St Los Angeles CA 90034 USA
-                    </h4>
-                    <WalkScore />
+              {/* Video */}
+              {property.video_url && (
+                <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30">
+                  <h4 className="title fz17 mb30">Video</h4>
+                  <div className="row">
+                    <PropertyVideo videoUrl={property.video_url} />
                   </div>
                 </div>
-              </div>
-              {/* End .ps-widget */}
+              )}
 
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                <h4 className="title fz17 mb30">Mortgage Calculator</h4>
-                <div className="row">
-                  <MortgageCalculator />
+              {/* Virtual Tour */}
+              {property.virtual_tour_url && (
+                <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
+                  <h4 className="title fz17 mb30">360° Virtual Tour</h4>
+                  <div className="row">
+                    <VirtualTour360 tourUrl={property.virtual_tour_url} />
+                  </div>
                 </div>
-              </div>
-              {/* End .ps-widget */}
+              )}
 
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                <div className="row">
-                  <PropertyViews />
-                </div>
-              </div>
-              {/* End .ps-widget */}
-
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                <h4 className="title fz17 mb30">Home Value</h4>
-                <div className="row">
-                  <HomeValueChart />
-                </div>
-              </div>
-              {/* End .ps-widget */}
-
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                <h4 className="title fz17 mb30">Get More Information</h4>
-                <InfoWithForm />
-              </div>
-              {/* End .ps-widget */}
-
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                <div className="row">
-                  {/* <AllComments /> */}
-                  <AllReviews />
-                </div>
-              </div>
-              {/* End .ps-widget */}
-
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                <h4 className="title fz17 mb30">Leave A Review</h4>
-                <div className="row">
-                  <ReviewBoxForm />
-                </div>
-              </div>
-              {/* End .ps-widget */}
+              {/* ... các components khác tương tự */}
             </div>
-            {/* End .col-8 */}
 
             <div className="col-lg-4">
               <div className="column">
                 <div className="default-box-shadow1 bdrs12 bdr1 p30 mb30-md bgc-white position-relative">
                   <h6 className="title fz17 mb30">Get More Information</h6>
-                  <ContactWithAgent />
-                  <ScheduleForm />
+                  <ContactWithAgent property={property} />
+                  <ScheduleForm property={property} />
                 </div>
               </div>
             </div>
           </div>
-          {/* End .row */}
 
-          <div className="row mt30 align-items-center justify-content-between">
-            <div className="col-auto">
-              <div className="main-title">
-                <h2 className="title">Discover Our Featured Listings</h2>
-                <p className="paragraph">
-                  Aliquam lacinia diam quis lacus euismod
-                </p>
-              </div>
-            </div>
-            {/* End header */}
-
-            <div className="col-auto mb30">
-              <div className="row align-items-center justify-content-center">
-                <div className="col-auto">
-                  <button className="featured-prev__active swiper_button">
-                    <i className="far fa-arrow-left-long" />
-                  </button>
-                </div>
-                {/* End prev */}
-
-                <div className="col-auto">
-                  <div className="pagination swiper--pagination featured-pagination__active" />
-                </div>
-                {/* End pagination */}
-
-                <div className="col-auto">
-                  <button className="featured-next__active swiper_button">
-                    <i className="far fa-arrow-right-long" />
-                  </button>
-                </div>
-                {/* End Next */}
-              </div>
-              {/* End .col for navigation and pagination */}
-            </div>
-            {/* End .col for navigation and pagination */}
-          </div>
-          {/* End .row */}
-
-          <div className="row">
+          {/* Similar Properties */}
+          <div className="row mt30">
             <div className="col-lg-12">
-              <div className="property-city-slider">
-                <NearbySimilarProperty />
-              </div>
+              <NearbySimilarProperty propertyId={property.id} />
             </div>
           </div>
-          {/* End .row */}
         </div>
       </section>
-
     </>
   );
-};
-
-export default SingleV2;
+}
